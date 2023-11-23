@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GSHN2BZVKW"></script>
+    <script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-GSHN2BZVKW');</script>
+    <meta charset="utf-8" />
+    <title>Gloria's Mojo Dojo Casa House</title>
+    <script src="https://zimjs.org/cdn/1.3.2/createjs.js"></script>
+    <script src="https://zimjs.org/cdn/cat/00/zim.js"></script>
+
+    <script type="module">
+        import zim from "https://zimjs.org/cdn/015/zim";
+
+        var scaling = "fit"; 
+        var width = 1024;
+        var height = 768;
+        var color = "#DAF7A6";
+        var outerColor = "#229954";
+
+
+        var assets = ["spritesheet.png", "spritesheet.json", "https://fonts.googleapis.com/css?family=Bangers", {font:"Oswald-Stencil", src:"Oswald-Stencil.ttf"}];
+        var path = "assets/";
+
+        var frame = new Frame(scaling, width, height, color, outerColor, assets, path);
+        frame.on("ready", function() {
+            zog("ready from ZIM Frame");
+            var stage = frame.stage;
+            var stageW = frame.width;
+            var stageH = frame.height;
+
+            frame.loadAssets(["spritesheet.json", "spritesheet.png", "Oswald-Stencil.ttf"], "assets/");
+
+            var sprite;
+            var emitter = new Emitter({
+                obj:new Circle({min:1, max:40}, ["#899d52", yellow, "#4b3d35"], clear, 2),
+                })
+                .center()
+                .mov(0, 8)
+                .spurt(20)
+
+            var answers = ["Let's rock!", "Nice tune!", "Let's hear another one!", "Yoo, I like that!","I think you should DJ!"];
+            var answer = new Label({
+                text: "",
+                color: "#899d52",  
+                size: 10,
+                font:  "Oswald-Stencil.ttf", 
+                backgroundColor: "white",
+                alpha: 0.5,
+                corner: 10,
+                paddingVertical: 10,
+            })
+            .sca(3);
+
+            // ~~~~~~~  
+            var text = new Label({
+                text: "Gloria's Mojo Dojo Casa House",
+                color: "#52BE80",
+                font: "Oswald-Stencil",
+                size: 45
+            })
+            .addTo();
+            text.x = -10;
+            text.y = 200;
+            text.animate({
+                    props:{alpha: 1, x: stageW/2 - 300},
+                    time: .3,
+                    ease:"bounceOut"
+            });
+                       
+
+            // ~~~~~~~  START BUTTON   
+            var startButton = new Button({
+                label: "READY?",
+                font: "Oswald-Stencil.ttf",
+                backgroundColor: "#52BE80",
+                rollBackgroundColor: "#FF5733",
+                corner: 8,
+                bold: true
+            })
+            .centerReg(stage)
+            
+            S.on("mouseover",()=> {
+                startButton.animate({
+                props:{alpha: 1, scale: [1,1.5]},
+                time: .1,
+                ease:"balisticOut",
+                rewind:true,
+                loop: 2
+            })
+            })
+            
+
+            startButton.tap(function () {
+                    sprite = new Sprite({ json: frame.asset("spritesheet.json") })
+                        .centerReg()
+                        .pos(70, 190);
+
+                    const label = new Label({
+                        text: "PRESS KEYS TO ROCK WITH ME!",
+                        color: "#4b3d35",
+                        font: "Oswald-Stencil",
+                        size: 45
+                    }).addTo()
+                    
+                    label.animate({
+                        props:{alpha: 1, x: stageW/2 - 250, y:40},
+                        time: 1,
+                        ease:"bounceOut"
+                    });
+
+                    synthPad.animate({
+                        props: { alpha: 1 },
+                        time: 0,
+                        call: function () {
+                            startButton.removeFrom(stage);
+                            text.removeFrom(stage);
+                            sprite.addTo(stage);
+                        }
+                    
+                });
+                
+            });//end button
+
+            var synthPad = new Container(stageW, stageH).loc(300, 0).addTo().alp(0);
+
+            // ~~~~~~~ BOARD
+            var backing = new Rectangle(stageW * 0.6, stageH * 0.63, new GradientColor(["#FFC300"], [0.3, 1], 0, stageH, stageW, 0), "#4b3d35", [100, 0, 100, 0],6)
+                .pos(5, 155, CENTER, TOP, synthPad);
+
+            var colors = [];
+            loop(5 * 5, function (i) {
+                colors.push(i < 5 * 3 ? "#899d52" : "#899d52")
+            });
+
+            var tile = new Tile({
+                obj: new Rectangle(80, 80, series(colors), null, null, 30)
+                    .expand(4) 
+                    .centerReg({add: false}), 
+                cols: 5,
+                rows: 5,
+                spacingH: 8,
+                spacingV: 8
+            });
+
+            // ~~~~~~~ DATA FOR SCALES
+            var ma = Synth.major;
+            var major = [];
+            loop(5, function (i) {
+                loop(ma, function (note) {
+                    major.push(Synth.getNote(Synth.note(note), (5 - i - 3) * 12));
+                });
+            });
+
+            var mi = Synth.minor;
+            var minor = [];
+            loop(5, function (i) {
+                loop(mi, function (note) {
+                    minor.push(Synth.getNote(Synth.note(note), (5 - i - 3) * 12));
+                });
+            });
+
+            // ~~~~~~~ TONE [SELECTOR]
+            var scale = minor;
+            var trebleTones = new Dictionary(); 
+            var baseTones = new Dictionary(); 
+            var synth = new Synth();
+            var tone;
+            var baseShape = SINE;
+            var trebleShape = SINE;
+            var baseVolume = 1;
+            var trebleVolume = 1;
+            var baseVibratoAmount = 10;
+            var baseVibratoRate = 5;
+            var baseVibratoShape = SINE;
+            var trebleVibratoAmount = 10;
+            var trebleVibratoRate = 5;
+            var trebleVibratoShape = SINE;
+
+            // ~~~~~~~ PAD KEY
+            var pad = new Selector({
+                multi: true,
+                tile: tile,
+                borderColor: 0,
+                backgroundColor: ["#B4C681", "#C99DDB", "#D35400", "#C48FD9", "#F9E79F", "#94C7E3"],
+                corner: 30,
+                paddingHorizontal: 0,
+                paddingVertical: 0,
+                keyArrows: false
+            })
+            .center(synthPad)
+            .mov(-50, 20)
+            .change(function () {
+                var down = pad.downItem;
+                var downIndex = pad.downIndex;
+                var type = downIndex >= 8 * 3 ? "base" : "treble";
+                if (down) {
+                    if (down.tone) down.tone.stop();
+
+                    // ~~~~~~~ PLAYING TONE [SYNTH]
+                    down.tone = synth.tone({
+                        note: scale[down.tileNum],
+                        release: 0.3,
+                        shape: type == "base" ? baseShape : trebleShape,
+                        volume: type == "base" ? baseVolume : trebleVolume,
+                        vibratoAmount: type == "base" ? baseVibratoAmount : trebleVibratoAmount,
+                        vibratoRate: type == "base" ? baseVibratoRate : trebleVibratoRate,
+                        vibratoShape: type == "base" ? baseVibratoShape : trebleVibratoShape,
+                    });
+
+                    if (type == "base") baseTones.add(down.tone);
+                    else trebleTones.add(down.tone);
+                }
+                var up = pad.upItem;
+                if (up && up.tone) {
+                    timeout(Math.max(0, 0.2 - up.tone.currentTime), function () {
+                        if (type == "base") baseTones.remove(up.tone);
+                        else trebleTones.remove(up.tone);
+                        up.tone.stop();
+                        up.tone = null;
+                    });
+                }
+            }); //end change
+            
+
+
+            // ~~~~~~~ ANSWER
+            pad.tap(function () {
+                sprite.run({
+                    time: 0.1,
+                    rewind: true,
+                    rewindWait: 0.2
+                }); 
+                var randomAnswer = answers[Math.floor(Math.random() * answers.length)];
+                answer.text = randomAnswer;
+                answer.pos(140,110, TOP, LEFT);  
+                zog(answer.alpha); 
+                zog(answer.text); 
+                pad.enabled = true;
+                pad.alp(1);
+                
+                answer.animate({
+                    props:{alpha: 1},
+                    time: .2,
+                    wait: .5,
+                    call: hide,                    
+                })
+                
+                function hide(){
+                    answer.alp(0);
+                }
+
+                var sparkles = new Emitter({
+                obj:new Circle({min:5, max:25}, ["#899d52", yellow, "#4b3d35"], clear, 2),
+                })
+                .centerReg(answer)
+                .mov(0, 8)
+                .spurt(7)
+               
+                    
+            }); //end tap
+            
+            
+
+            // ~~~~~~~ WAVE
+            var waves = ["Bass.json", "treble.json"];
+            var path = "../cdn/waves/";
+            var waveNames = [];
+            loop(waves, function (n) {
+                n = n.replace(/_/g, " ");
+                waveNames.push(n.split(".")[0]);
+            }); // end waves 
+
+            stage.update(); 
+
+        }); // end of ready
+    </script>
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
+</head>
+<body>
+</body>
+</html>
